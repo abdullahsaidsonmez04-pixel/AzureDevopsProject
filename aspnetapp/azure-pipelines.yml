@@ -1,0 +1,40 @@
+trigger:
+- master
+
+variables:
+  imageName: 'abdullah6128/aspnetapp'   # Docker Hub için doğru repository adı
+  tag: 'latest'
+  dockerRegistryServiceConnection: 'myDockerHubServiceConnection'
+
+pool:
+  name: 'default'
+
+steps:
+- checkout: self
+
+# 1️⃣ Docker Build
+- task: Docker@2
+  displayName: 'Build Docker Image'
+  inputs:
+    command: 'build'
+    Dockerfile: 'Dockerfile'
+    repository: $(imageName)
+    tags: |
+      $(tag)
+    buildContext: '.'
+
+# 2️⃣ Docker Push
+- task: Docker@2
+  displayName: 'Push Docker image to registry'
+  inputs:
+    command: 'push'
+    containerRegistry: $(dockerRegistryServiceConnection)
+    repository: $(imageName)
+    tags: |
+      $(tag)
+
+# 3️⃣ Local Test (Opsiyonel)
+- script: |
+    docker run -d -p 8080:80 $(imageName):$(tag)
+  displayName: 'Run container locally'
+
